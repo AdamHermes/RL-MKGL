@@ -31,8 +31,12 @@ if ! command -v conda >/dev/null 2>&1; then
     echo "Load Conda before submitting; use sbatch --export=ALL." >&2
     exit 1
 fi
+# Conda compiler hooks may reference unset CONDA_BACKUP_* variables.
+# Keep errexit/pipefail, but suspend nounset while Conda switches environments.
+set +u
 eval "$(conda shell.bash hook)"
 conda activate "${MKGL_ENV:-mkgl}"
+set -u
 export CUDA_HOME="${MKGL_CUDA_HOME:-$CONDA_PREFIX}"
 export CC="${MKGL_CC:-$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-gcc}"
 export CXX="${MKGL_CXX:-$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-g++}"
