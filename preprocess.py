@@ -126,11 +126,11 @@ class InductiveKGCDataset(object):
             return rows
 
         ent_vocab_df = ent_vocab_df.groupby(
-            'fine_name').apply(process_overlapped_name)
+            'fine_name', group_keys=True).apply(process_overlapped_name)
         ent_vocab_df = ent_vocab_df.droplevel('fine_name').sort_index()
 
         rel_vocab_df = rel_vocab_df.groupby(
-            'fine_name').apply(process_overlapped_name)
+            'fine_name', group_keys=True).apply(process_overlapped_name)
         rel_vocab_df = rel_vocab_df.droplevel('fine_name').sort_index()
 
         ent_vocab_df['entity'] = 1
@@ -311,11 +311,11 @@ class KGCDataset(InductiveKGCDataset):
             return rows
 
         ent_vocab_df = ent_vocab_df.groupby(
-            'fine_name').apply(process_overlapped_name)
+            'fine_name', group_keys=True).apply(process_overlapped_name)
         ent_vocab_df = ent_vocab_df.droplevel('fine_name').sort_index()
 
         rel_vocab_df = rel_vocab_df.groupby(
-            'fine_name').apply(process_overlapped_name)
+            'fine_name', group_keys=True).apply(process_overlapped_name)
         rel_vocab_df = rel_vocab_df.droplevel('fine_name').sort_index()
 
         ent_vocab_df['entity'] = 1

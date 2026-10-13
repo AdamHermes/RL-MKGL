@@ -34,7 +34,9 @@ eval "$(conda shell.bash hook)"
 conda activate "${MKGL_ENV:-mkgl}"
 export CUDA_HOME="${MKGL_CUDA_HOME:-$CONDA_PREFIX}"
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-export HF_HOME="${HF_HOME:-$PWD/data/hf_cache}"
+# HF_HOME also controls the saved login token. Preserve the login location;
+# relocate only model downloads so an existing `hf auth login` still works.
+export HF_HUB_CACHE="${HF_HUB_CACHE:-$PWD/data/hf_cache/hub}"
 export PYTHONUNBUFFERED=1
 
 CONFIG="${1:-config/fb15k237.yaml}"
@@ -51,7 +53,7 @@ if [[ -n "$VERSION" ]]; then
     VERSION_ARGS=(--version "$VERSION")
 fi
 
-mkdir -p logs "$HF_HOME"
+mkdir -p logs "$HF_HUB_CACHE"
 RUN_ID="${SLURM_JOB_ID:-$(date +%Y%m%d_%H%M%S)}"
 exec > >(tee "logs/${CONFIG_NAME}_baseline_${RUN_ID}.log") 2>&1
 echo "Config: $CONFIG; version: ${VERSION:-transductive}; seed: $SEED"

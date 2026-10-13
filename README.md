@@ -103,6 +103,8 @@ Load Conda before submitting and provide Hugging Face model access through your
 existing login or exported `HF_TOKEN`. `MKGL_ENV` overrides the environment name;
 `MKGL_DIR` overrides the repository location. Logs go to `logs/` and Slurm's
 `slurm-mkgl-baseline-<jobid>.out/.err` files.
+The script preserves `HF_HOME` (and your saved login token); only model downloads
+are redirected through `HF_HUB_CACHE`, defaulting to `data/hf_cache/hub`.
 
 The submit script evaluates on validation data. Compact LoRA, context-retriever,
 and score-retriever weights are saved to `outputs/<config_name>/mkgl_checkpoint.pt`
