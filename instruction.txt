@@ -1,0 +1,142 @@
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+
+source ~/.bashrc
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+conda create -n mkgl python=3.8 -y
+conda activate mkgl
+
+cd M-MKGL
+
+pip install torch==2.0.1+cu117 torchvision torchaudio \
+--index-url https://download.pytorch.org/whl/cu117
+
+conda install -c nvidia cuda-runtime=11.7 cuda-cudart=11.7 \
+libcusparse=11.7 libcublas=11.10 -y
+
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+
+pip install numpy scipy
+
+pip install torch-scatter torch-sparse torch-cluster torch-spline-conv \
+-f https://data.pyg.org/whl/torch-2.0.1+cu117.html
+
+
+pip install pandas swifter easydict pyyaml sentencepiece cffi==1.15.1 lmdb==1.4.1
+pip install transformers==4.36.2 peft==0.7.1
+pip install bitsandbytes==0.41.1
+pip install accelerate==0.25.0
+
+pip install datasets protobuf tensorboardX
+pip install torchdrug
+
+python scripts/build_clip_features.py --fp16 --batch-size 32 --num-urls-per-entity 1
+python preprocess.py -c config/fb15k237_ind.yaml --version v1
+
+
+python main.py -c config/fb15k237_ind.yaml -v v1 --grpo-weight 0.2
+python main.py -c config/fb15k237_ind.yaml -v v1 --mkgl-checkpoint "/content/drive/MyDrive/MKGL_Results/checkpoint-132" --eval-only --log-eval-details --log-pruning-stats
+
+
+  100%|██████████████████████████████████████████████████████████████| 264/264 [46:07<00:00, 10.14s/it]{'mr': 300.97657213316893, 'mrr': 0.3273958766650277, 'hits@1': 0.2466091245376079, 'hits@3': 0.3871763255240444, 'hits@10': 0.46115906288532676}
+03:44:28   Summary name eval/hits@1 is illegal; using eval/hits_1 instead.
+03:44:28   Summary name eval/hits@3 is illegal; using eval/hits_3 instead.
+03:44:28   Summary name eval/hits@10 is illegal; using eval/hits_10 instead.
+{'eval_loss': 0.7101063132286072, 'eval_mr': 300.97657213316893, 'eval_mrr': 0.3273958766650277, 'eval_hits@1': 0.2466091245376079, 'eval_hits@3': 0.3871763255240444, 'eval_hits@10': 0.46115906288532676, 'eval_runtime': 66.4333, 'eval_samples_per_second': 6.187, 'eval_steps_per_second': 0.391, 'epoch': 1.99}
+{'train_runtime': 2834.1936, 'train_samples_per_second': 2.996, 'train_steps_per_second': 0.093, 'train_loss': 0.5906019644303755, 'epoch': 1.99}                                                          
+100%|██████████████████████████████████████████████████████████████| 264/264 [47:14<00:00, 10.74s/it]
+Saved checkpoint to outputs/fb15k237_ind/mkgl_checkpoint.pt
+
+
+
+7b run
+'mr': 760.6905055487053, 'mrr': 0.011390185807904376, 'hits@1': 0.006165228113440197, 'hits@3': 0.009864364981504316, 'hits@10': 0.012330456226880395}
+06:02:12   Summary name eval/hits@1 is illegal; using eval/hits_1 instead.
+06:02:12   Summary name eval/hits@3 is illegal; using eval/hits_3 instead.
+06:02:12   Summary name eval/hits@10 is illegal; using eval/hits_10 instead.
+100%|████████████████████████████████████████████████████████████████████████████████| 26/26 [01:09<00:00,  2.69s/it]
+{'loss': 0.7553, 'learning_rate': 0.0005, 'epoch': 0.03}                                                             
+{'loss': 0.6819, 'learning_rate': 0.001, 'epoch': 0.06}                                                              
+{'loss': 0.6425, 'learning_rate': 0.0015, 'epoch': 0.08}                                                             
+{'loss': 0.6185, 'learning_rate': 0.002, 'epoch': 0.11}                                                              
+{'loss': 0.578, 'learning_rate': 0.0025, 'epoch': 0.14}                                                              
+{'loss': 0.614, 'learning_rate': 0.003, 'epoch': 0.17}                                                               
+{'loss': 0.5759, 'learning_rate': 0.0034999999999999996, 'epoch': 0.2}                                               
+{'loss': 0.5655, 'learning_rate': 0.004, 'epoch': 0.23}                                                              
+{'loss': 0.5424, 'learning_rate': 0.0045000000000000005, 'epoch': 0.25}                                              
+{'loss': 0.5522, 'learning_rate': 0.005, 'epoch': 0.28}                                                              
+{'loss': 0.5875, 'learning_rate': 0.004917763157894737, 'epoch': 0.31}                                               
+{'loss': 0.5239, 'learning_rate': 0.004835526315789473, 'epoch': 0.34}                                               
+{'loss': 0.5487, 'learning_rate': 0.004753289473684211, 'epoch': 0.37}                                               
+{'loss': 0.5326, 'learning_rate': 0.004671052631578947, 'epoch': 0.4}                                                
+{'loss': 0.5186, 'learning_rate': 0.004588815789473684, 'epoch': 0.42}                                               
+{'loss': 0.5048, 'learning_rate': 0.004506578947368421, 'epoch': 0.45}                                               
+{'loss': 0.4534, 'learning_rate': 0.004424342105263158, 'epoch': 0.48}                                               
+{'loss': 0.5516, 'learning_rate': 0.004342105263157895, 'epoch': 0.51}                                               
+{'loss': 0.5009, 'learning_rate': 0.004259868421052632, 'epoch': 0.54}                                               
+{'loss': 0.5043, 'learning_rate': 0.004177631578947369, 'epoch': 0.56}                                               
+{'loss': 0.5133, 'learning_rate': 0.004095394736842105, 'epoch': 0.59}                                               
+{'loss': 0.5089, 'learning_rate': 0.004013157894736843, 'epoch': 0.62}                                               
+{'loss': 0.5085, 'learning_rate': 0.003930921052631579, 'epoch': 0.65}                                               
+{'loss': 0.5211, 'learning_rate': 0.003848684210526316, 'epoch': 0.68}                                               
+{'loss': 0.5215, 'learning_rate': 0.003766447368421053, 'epoch': 0.71}                                               
+{'loss': 0.5109, 'learning_rate': 0.0036842105263157894, 'epoch': 0.73}                                              
+{'loss': 0.5287, 'learning_rate': 0.0036019736842105264, 'epoch': 0.76}                                              
+{'loss': 0.4409, 'learning_rate': 0.0035197368421052634, 'epoch': 0.79}                                              
+{'loss': 0.4911, 'learning_rate': 0.0034375, 'epoch': 0.82}                                                          
+{'loss': 0.518, 'learning_rate': 0.0033552631578947366, 'epoch': 0.85}                                               
+{'loss': 0.4591, 'learning_rate': 0.0032730263157894736, 'epoch': 0.88}                                              
+{'loss': 0.4444, 'learning_rate': 0.0031907894736842106, 'epoch': 0.9}                                               
+{'loss': 0.5461, 'learning_rate': 0.0031085526315789477, 'epoch': 0.93}                                              
+{'loss': 0.5073, 'learning_rate': 0.0030263157894736843, 'epoch': 0.96}                                              
+{'loss': 0.4624, 'learning_rate': 0.002944078947368421, 'epoch': 0.99}                                               
+ 50%|███████████████████████████████████████                                       | 177/354 [24:01<22:57,  7.78s/it]{'mr': 157.7620221948212, 'mrr': 0.46263378468031047, 'hits@1': 0.3847102342786683, 'hits@3': 0.5067817509247842, 'hits@10': 0.6004932182490752}
+06:27:25   Summary name eval/hits@1 is illegal; using eval/hits_1 instead.
+06:27:25   Summary name eval/hits@3 is illegal; using eval/hits_3 instead.
+06:27:25   Summary name eval/hits@10 is illegal; using eval/hits_10 instead.
+{'eval_loss': 0.6927325129508972, 'eval_mr': 157.7620221948212, 'eval_mrr': 0.46263378468031047, 'eval_hits@1': 0.3847102342786683, 'eval_hits@3': 0.5067817509247842, 'eval_hits@10': 0.6004932182490752, 'eval_runtime': 71.9827, 'eval_samples_per_second': 5.71, 'eval_steps_per_second': 0.361, 'epoch': 1.0}
+{'loss': 0.4167, 'learning_rate': 0.002861842105263158, 'epoch': 1.02}                                               
+{'loss': 0.4494, 'learning_rate': 0.002779605263157895, 'epoch': 1.05}                                               
+{'loss': 0.4261, 'learning_rate': 0.002697368421052632, 'epoch': 1.07}                                               
+{'loss': 0.3891, 'learning_rate': 0.0026151315789473685, 'epoch': 1.1}                                               
+{'loss': 0.5015, 'learning_rate': 0.002532894736842105, 'epoch': 1.13}                                               
+{'loss': 0.418, 'learning_rate': 0.002450657894736842, 'epoch': 1.16}                                                
+{'loss': 0.4128, 'learning_rate': 0.0023684210526315787, 'epoch': 1.19}                                              
+{'loss': 0.4122, 'learning_rate': 0.0022861842105263157, 'epoch': 1.21}                                              
+{'loss': 0.4776, 'learning_rate': 0.0022039473684210527, 'epoch': 1.24}                                              
+{'loss': 0.442, 'learning_rate': 0.0021217105263157897, 'epoch': 1.27}                                               
+{'loss': 0.4265, 'learning_rate': 0.0020394736842105263, 'epoch': 1.3}                                               
+{'loss': 0.42, 'learning_rate': 0.0019572368421052633, 'epoch': 1.33}                                                
+{'loss': 0.4258, 'learning_rate': 0.001875, 'epoch': 1.36}                                                           
+{'loss': 0.4609, 'learning_rate': 0.0017927631578947367, 'epoch': 1.38}                                              
+{'loss': 0.4457, 'learning_rate': 0.0017105263157894738, 'epoch': 1.41}                                              
+{'loss': 0.4141, 'learning_rate': 0.0016282894736842106, 'epoch': 1.44}                                              
+{'loss': 0.4775, 'learning_rate': 0.0015460526315789476, 'epoch': 1.47}                                              
+{'loss': 0.3963, 'learning_rate': 0.0014638157894736842, 'epoch': 1.5}                                               
+{'loss': 0.4365, 'learning_rate': 0.0013815789473684212, 'epoch': 1.53}                                              
+{'loss': 0.4214, 'learning_rate': 0.001299342105263158, 'epoch': 1.55}                                               
+{'loss': 0.4827, 'learning_rate': 0.0012171052631578948, 'epoch': 1.58}                                              
+{'loss': 0.4093, 'learning_rate': 0.0011348684210526316, 'epoch': 1.61}                                              
+{'loss': 0.4507, 'learning_rate': 0.0010526315789473684, 'epoch': 1.64}                                              
+{'loss': 0.4296, 'learning_rate': 0.0009703947368421052, 'epoch': 1.67}                                              
+{'loss': 0.4094, 'learning_rate': 0.0008881578947368421, 'epoch': 1.69}                                              
+{'loss': 0.4784, 'learning_rate': 0.000805921052631579, 'epoch': 1.72}                                               
+{'loss': 0.4263, 'learning_rate': 0.0007236842105263158, 'epoch': 1.75}                                              
+{'loss': 0.4216, 'learning_rate': 0.0006414473684210527, 'epoch': 1.78}                                              
+{'loss': 0.4226, 'learning_rate': 0.0005592105263157895, 'epoch': 1.81}                                              
+{'loss': 0.4449, 'learning_rate': 0.00047697368421052635, 'epoch': 1.84}                                             
+{'loss': 0.434, 'learning_rate': 0.00039473684210526315, 'epoch': 1.86}                                              
+{'loss': 0.4467, 'learning_rate': 0.0003125, 'epoch': 1.89}                                                          
+{'loss': 0.4313, 'learning_rate': 0.00023026315789473684, 'epoch': 1.92}                                             
+{'loss': 0.4315, 'learning_rate': 0.00014802631578947367, 'epoch': 1.95}                                             
+{'loss': 0.4234, 'learning_rate': 6.578947368421052e-05, 'epoch': 1.98}                                              
+100%|██████████████████████████████████████████████████████████████████████████████| 354/354 [49:10<00:00,  7.79s/it]{'mr': 145.8643649815043, 'mrr': 0.46229073086979694, 'hits@1': 0.374845869297164, 'hits@3': 0.5166461159062885, 'hits@10': 0.6103575832305795}
+06:52:34   Summary name eval/hits@1 is illegal; using eval/hits_1 instead.
+06:52:34   Summary name eval/hits@3 is illegal; using eval/hits_3 instead.
+06:52:34   Summary name eval/hits@10 is illegal; using eval/hits_10 instead.
+{'eval_loss': 0.7916299700737, 'eval_mr': 145.8643649815043, 'eval_mrr': 0.46229073086979694, 'eval_hits@1': 0.374845869297164, 'eval_hits@3': 0.5166461159062885, 'eval_hits@10': 0.6103575832305795, 'eval_runtime': 71.6057, 'eval_samples_per_second': 5.74, 'eval_steps_per_second': 0.363, 'epoch': 2.0}
+{'train_runtime': 3021.8776, 'train_samples_per_second': 2.81, 'train_steps_per_second': 0.117, 'train_loss': 0.4862706149365269, 'epoch': 2.0}                                                                                            
+100%|██████████████████████████████████████████████████████████████████████████████| 354/354 [50:21<00:00,  8.54s/it]
+Saved checkpoint to outputs/fb15k237_ind_v1/mkgl_checkpoint.pt

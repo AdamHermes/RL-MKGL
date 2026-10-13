@@ -1,4 +1,4 @@
-import os, sys, logging, argparse, yaml, easydict
+import os, sys, logging, argparse, yaml, easydict, json
 import numpy as np
 import torch
 
@@ -17,6 +17,7 @@ from torchdrug.utils import comm, pretty
 from llm import *
 from collector import *
 from preprocess import *
+from baseline_checkpoint import BaselineCheckpointCallback, save_baseline_checkpoint
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='data preprocessing')
@@ -24,9 +25,15 @@ if __name__ == "__main__":
                         default='config/fb15k237.yaml')
     parser.add_argument("--version", "-v", type=str,
                         default='')
-    parser.add_argument("--seed", "-s", type=str,
+    parser.add_argument("--seed", "-s", type=int,
                         default=42)
+    parser.add_argument("--eval-split", choices=("valid", "test"), default="test")
+    parser.add_argument("--checkpoint-steps", type=int, default=500,
+                        help="Save compact frozen-model weights every N optimizer steps; 0 disables step saves.")
+    parser.add_argument("--save-mkgl-checkpoint", type=str, default=None)
     args = parser.parse_args()
+    if args.checkpoint_steps < 0:
+        parser.error("--checkpoint-steps must be >= 0")
     
     with open(args.config, "r") as f:
         cfg = easydict.EasyDict(yaml.safe_load(f))
@@ -68,6 +75,30 @@ if __name__ == "__main__":
 
     kgl2token = torch.tensor(np.stack(dataset.vocab_df.text_token_ids)[:, :cfg.kgl_token_length])     
     model.init_kg_specs(kgl2token, tokenizer.vocab_size, cfg) 
+
+    checkpoint_path = args.save_mkgl_checkpoint or os.path.join(
+        cfg.trainer.output_dir, "mkgl_checkpoint.pt")
+    checkpoint_metadata = {
+        "config_name": config_name,
+        "config": json.loads(json.dumps(cfg)),
+        "seed": args.seed,
+        "eval_split": args.eval_split,
+        "base_model": cfg.mkgl.pretrained_model_name_or_path,
+        "preprocessed_dataset": file_path,
+        "orig_vocab_size": int(tokenizer.vocab_size),
+        "kgl2token": kgl2token.cpu(),
+        "kgl_token_indices": [int(i) for i in dataset.vocab_df.index],
+        "kgl_raw_names": dataset.vocab_df.raw_name.tolist(),
+        "relation_vocab": list(dataset.kgdata.relation_vocab),
+    }
+    for vocab_name in ("entity_vocab", "transductive_vocab", "inductive_vocab"):
+        vocab = getattr(dataset.kgdata, vocab_name, None)
+        if vocab is not None:
+            checkpoint_metadata[vocab_name] = list(vocab)
+    if comm.get_rank() == 0:
+        tokenizer.save_pretrained(os.path.join(cfg.trainer.output_dir, "tokenizer"))
+    checkpoint_callback = BaselineCheckpointCallback(
+        model, checkpoint_path, checkpoint_metadata, args.checkpoint_steps)
     
     if comm.get_rank() == 0:
         print(model.print_trainable_parameters())
@@ -112,12 +143,20 @@ if __name__ == "__main__":
     trainer = Trainer(
         model=task,
         args=training_args,
-        eval_dataset=dataset.test_data.remove_columns(
+        eval_dataset=(dataset.valid_data if args.eval_split == "valid" else dataset.test_data).remove_columns(
             removed_columns),  
         train_dataset=dataset.train_data.remove_columns(removed_columns),
         data_collator=data_loader,
-        compute_metrics=compute_metrics
+        compute_metrics=compute_metrics,
+        callbacks=[checkpoint_callback],
     )
     trainer.evaluate()
     trainer.train()
+    if trainer.is_world_process_zero():
+        save_baseline_checkpoint(
+            model, checkpoint_path, checkpoint_metadata,
+            step=trainer.state.global_step, epoch=trainer.state.epoch,
+            training_completed=True,
+        )
+        trainer.save_state()
 

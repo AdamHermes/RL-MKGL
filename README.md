@@ -80,6 +80,42 @@ Please kindly use the provide scripts to run the model:
 sh scripts/fb15k237.sh
 ```
 
+### Baseline environment and Slurm checkpoint training
+
+From the MKGL repository directory, install the environment described in
+`instruction.txt` (without the Conda download / terms-of-service commands):
+
+```bash
+bash scripts/setup_mkgl.sh
+sbatch scripts/train_baseline.sh
+```
+
+The job uses partition `gpu-long`, a five-hour limit, and one GPU. It defaults
+to FB15k-237 transductive and preprocesses the dataset if its cache is missing.
+Other runs can be submitted with:
+
+```bash
+sbatch scripts/train_baseline.sh config/fb15k237_ind.yaml v1
+sbatch --gres=gpu:4 scripts/train_baseline.sh config/wn18rr.yaml
+```
+
+Load Conda before submitting and provide Hugging Face model access through your
+existing login or exported `HF_TOKEN`. `MKGL_ENV` overrides the environment name;
+`MKGL_DIR` overrides the repository location. Logs go to `logs/` and Slurm's
+`slurm-mkgl-baseline-<jobid>.out/.err` files.
+
+The submit script evaluates on validation data. Compact LoRA, context-retriever,
+and score-retriever weights are saved to `outputs/<config_name>/mkgl_checkpoint.pt`
+every 500 optimizer steps, at epoch boundaries, and on normal completion.
+`mkgl_best.pt` holds the best validation-MRR snapshot after training has started.
+Set `CHECKPOINT_STEPS` to change the save interval.
+
+The checkpoint includes configuration, KG token / vocabulary mapping, progress,
+and a `training_completed` flag. The tokenizer is saved alongside it. Recreate
+the same pretrained LLM and MKGL modules, load `payload["state_dict"]` into the
+PEFT-wrapped MKGL model, then freeze its parameters for the RL stage. These
+compact files are conditioner weights, not full optimizer-resume checkpoints.
+
 ### Cite
 
 Please condiser citing our paper if it is helpful to your work!
