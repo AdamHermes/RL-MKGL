@@ -90,13 +90,14 @@ bash scripts/setup_mkgl.sh
 sbatch scripts/train_baseline.sh
 ```
 
-The job uses partition `gpu-long`, a five-hour limit, and one GPU. It defaults
+The job uses partition `gpu-long`, a five-hour limit, and one 80 GB A100
+(`--gres=gpu:a100-80:1`, matching this cluster's GRES type). It defaults
 to FB15k-237 transductive and preprocesses the dataset if its cache is missing.
 Other runs can be submitted with:
 
 ```bash
 sbatch scripts/train_baseline.sh config/fb15k237_ind.yaml v1
-sbatch --gres=gpu:4 scripts/train_baseline.sh config/wn18rr.yaml
+sbatch scripts/train_baseline.sh config/wn18rr.yaml
 ```
 
 Load Conda before submitting and provide Hugging Face model access through your
@@ -105,6 +106,18 @@ existing login or exported `HF_TOKEN`. `MKGL_ENV` overrides the environment name
 `slurm-mkgl-baseline-<jobid>.out/.err` files.
 The script preserves `HF_HOME` (and your saved login token); only model downloads
 are redirected through `HF_HUB_CACHE`, defaulting to `data/hf_cache/hub`.
+
+If an existing environment reports `unsupported GNU version` or missing
+`cusparse.h` while building TorchDrug, repair it without recreating the environment:
+
+```bash
+conda install -n mkgl -c nvidia/label/cuda-11.7.1 -c nvidia 'cuda-toolkit=11.7' -y
+conda install -n mkgl -c conda-forge 'gcc_linux-64=11' 'gxx_linux-64=11' -y
+```
+
+The updated job script explicitly selects the Conda GCC/G++ compilers, includes
+the CUDA headers, and builds/tests TorchDrug's CUDA kernel before loading Llama.
+`MKGL_CC`, `MKGL_CXX`, and `MKGL_CUDA_HOME` can override these toolchain locations.
 
 The submit script evaluates on validation data. Compact LoRA, context-retriever,
 and score-retriever weights are saved to `outputs/<config_name>/mkgl_checkpoint.pt`

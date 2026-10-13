@@ -17,11 +17,16 @@ python -m pip install \
     torch==2.0.1+cu117 torchvision==0.15.2+cu117 torchaudio==2.0.2+cu117 \
     --index-url https://download.pytorch.org/whl/cu117
 
-# NVCC and headers are needed by TorchDrug's JIT CUDA extensions.
-conda install -n "$ENV_NAME" -c nvidia -y \
-    cuda-runtime=11.7 cuda-cudart=11.7 cuda-cudart-dev=11.7 cuda-nvcc=11.7 \
-    libcusparse=11.7 libcublas=11.10
+# TorchDrug compiles CUDA kernels: runtime-only packages lack cuSPARSE headers.
+conda install -n "$ENV_NAME" -c nvidia/label/cuda-11.7.1 -c nvidia -y \
+    'cuda-toolkit=11.7'
+# CUDA 11.7 rejects GCC > 11; use an environment-local host toolchain.
+conda install -n "$ENV_NAME" -c conda-forge -y \
+    'gcc_linux-64=11' 'gxx_linux-64=11'
 export CUDA_HOME="$CONDA_PREFIX"
+export CC="$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-gcc"
+export CXX="$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-g++"
+export CPATH="$CUDA_HOME/include:$CUDA_HOME/targets/x86_64-linux/include${CPATH:+:$CPATH}"
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 python -m pip install numpy==1.24.4 scipy==1.10.1
