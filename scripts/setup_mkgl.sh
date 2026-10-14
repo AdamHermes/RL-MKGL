@@ -26,7 +26,7 @@ conda install -n "$ENV_NAME" -c nvidia/label/cuda-11.7.1 -c nvidia -y \
     'cuda-toolkit=11.7'
 # CUDA 11.7 rejects GCC > 11; use an environment-local host toolchain.
 conda install -n "$ENV_NAME" -c conda-forge -y \
-    'gcc_linux-64=11' 'gxx_linux-64=11'
+    'gcc_linux-64=11' 'gxx_linux-64=11' libxcrypt
 set -u
 export CUDA_HOME="$CONDA_PREFIX"
 export CC="$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-gcc"

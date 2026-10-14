@@ -40,7 +40,7 @@ set -u
 export CUDA_HOME="${MKGL_CUDA_HOME:-$CONDA_PREFIX}"
 export CC="${MKGL_CC:-$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-gcc}"
 export CXX="${MKGL_CXX:-$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-g++}"
-export CPATH="$CUDA_HOME/include:$CUDA_HOME/targets/x86_64-linux/include${CPATH:+:$CPATH}"
+export CPATH="$CONDA_PREFIX/include:$CUDA_HOME/include:$CUDA_HOME/targets/x86_64-linux/include${CPATH:+:$CPATH}"
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export TORCH_EXTENSIONS_DIR="${TORCH_EXTENSIONS_DIR:-$PWD/data/torch_extensions/cu117_gcc11}"
 export MAX_JOBS="${MAX_JOBS:-2}"
@@ -50,6 +50,10 @@ if [[ ! -x "$CC" || ! -x "$CXX" ]]; then
 fi
 if [[ ! -f "$CUDA_HOME/include/cusparse.h" && ! -f "$CUDA_HOME/targets/x86_64-linux/include/cusparse.h" ]]; then
     echo "Missing cusparse.h. Install the full cuda-toolkit=11.7 development package." >&2
+    exit 1
+fi
+if [[ ! -f "$CONDA_PREFIX/include/crypt.h" ]]; then
+    echo "Missing crypt.h required by Python 3.8 headers. Run: conda install -n ${MKGL_ENV:-mkgl} -c conda-forge libxcrypt -y" >&2
     exit 1
 fi
 # HF_HOME also controls the saved login token. Preserve the login location;

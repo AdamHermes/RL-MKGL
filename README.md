@@ -112,12 +112,15 @@ If an existing environment reports `unsupported GNU version` or missing
 
 ```bash
 conda install -n mkgl -c nvidia/label/cuda-11.7.1 -c nvidia 'cuda-toolkit=11.7' -y
-conda install -n mkgl -c conda-forge 'gcc_linux-64=11' 'gxx_linux-64=11' -y
+conda install -n mkgl -c conda-forge 'gcc_linux-64=11' 'gxx_linux-64=11' libxcrypt -y
 ```
 
 The updated job script explicitly selects the Conda GCC/G++ compilers, includes
 the CUDA headers, and builds/tests TorchDrug's CUDA kernel before loading Llama.
 `MKGL_CC`, `MKGL_CXX`, and `MKGL_CUDA_HOME` can override these toolchain locations.
+`libxcrypt` supplies `include/crypt.h`, which Python 3.8's headers may require
+when compiling a C++ extension with the Conda compiler sysroot. For that missing
+header alone, install `conda install -n mkgl -c conda-forge libxcrypt -y`.
 
 The submit script evaluates on validation data. Compact LoRA, context-retriever,
 and score-retriever weights are saved to `outputs/<config_name>/mkgl_checkpoint.pt`
