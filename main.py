@@ -150,7 +150,7 @@ if __name__ == "__main__":
         compute_metrics=compute_metrics,
         callbacks=[checkpoint_callback],
     )
-    trainer.evaluate()
+    #trainer.evaluate()
     trainer.train()
     if trainer.is_world_process_zero():
         save_baseline_checkpoint(
