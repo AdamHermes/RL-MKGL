@@ -90,8 +90,10 @@ bash scripts/setup_mkgl.sh
 sbatch scripts/train_baseline.sh
 ```
 
-The job uses partition `gpu-long`, a five-hour limit, and one 80 GB A100
-(`--gres=gpu:a100-80:1`, matching this cluster's GRES type). It defaults
+The job uses partition `gpu-long`, a five-hour limit, and one 40 GB A100
+(`--gres=gpu:a100-40:1`, matching this cluster's GRES type). It runs
+`python main.py` directly, following the single-GPU command above, with mixed
+precision controlled by the YAML trainer configuration. It defaults
 to FB15k-237 transductive and preprocesses the dataset if its cache is missing.
 Other runs can be submitted with:
 
