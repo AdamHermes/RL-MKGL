@@ -56,6 +56,11 @@ if [[ ! -f "$CONDA_PREFIX/include/crypt.h" ]]; then
     echo "Missing crypt.h required by Python 3.8 headers. Run: conda install -n ${MKGL_ENV:-mkgl} -c conda-forge libxcrypt -y" >&2
     exit 1
 fi
+# Thrust/CUB headers must match the CUDA 11.7 compiler, not the latest CCCL.
+if [[ ! -f "$CUDA_HOME/include/thrust/complex.h" && ! -f "$CUDA_HOME/targets/x86_64-linux/include/thrust/complex.h" && ! -f "$CONDA_PREFIX/include/thrust/complex.h" ]]; then
+    echo "Missing thrust/complex.h in the configured include paths. Locate an existing header or install cuda-cccl=11.7.91 from nvidia/label/cuda-11.7.1." >&2
+    exit 1
+fi
 # HF_HOME also controls the saved login token. Preserve the login location;
 # relocate only model downloads so an existing `hf auth login` still works.
 export HF_HUB_CACHE="${HF_HUB_CACHE:-$PWD/data/hf_cache/hub}"

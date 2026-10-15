@@ -23,7 +23,7 @@ python -m pip install \
 # Installing into the active environment can also invoke Conda compiler hooks.
 set +u
 conda install -n "$ENV_NAME" -c nvidia/label/cuda-11.7.1 -c nvidia -y \
-    'cuda-toolkit=11.7'
+    'cuda-toolkit=11.7' 'cuda-cccl=11.7.91'
 # CUDA 11.7 rejects GCC > 11; use an environment-local host toolchain.
 conda install -n "$ENV_NAME" -c conda-forge -y \
     'gcc_linux-64=11' 'gxx_linux-64=11' libxcrypt

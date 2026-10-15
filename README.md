@@ -122,6 +122,21 @@ the CUDA headers, and builds/tests TorchDrug's CUDA kernel before loading Llama.
 when compiling a C++ extension with the Conda compiler sysroot. For that missing
 header alone, install `conda install -n mkgl -c conda-forge libxcrypt -y`.
 
+If compilation reports `thrust/complex.h: No such file or directory`, the CUDA
+compiler cannot find the Thrust headers. Install the CUDA 11.7 header package
+explicitly; avoid pulling the latest CCCL into this older toolchain:
+
+```bash
+set +u
+conda install -n mkgl -c nvidia/label/cuda-11.7.1 -c nvidia 'cuda-cccl=11.7.91' -y
+conda activate mkgl
+find "$CONDA_PREFIX" -path '*/thrust/complex.h' -print
+```
+
+The job script checks the environment and CUDA include directories for this
+header before loading the model. If the package is already installed but its
+header is absent, repeat the install command with `--force-reinstall`.
+
 The submit script evaluates on validation data. Compact LoRA, context-retriever,
 and score-retriever weights are saved to `outputs/<config_name>/mkgl_checkpoint.pt`
 every 500 optimizer steps, at epoch boundaries, and on normal completion.
